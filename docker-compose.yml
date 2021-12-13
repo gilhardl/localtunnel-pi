@@ -1,0 +1,32 @@
+services:
+  nginx:
+    container_name: localtunnel_nginx
+    image: nginx:alpine
+    restart: unless-stopped
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl/:/etc/nginx/ssl/
+      - ./nginx/templates:/etc/nginx/templates
+    ports:
+      - 80:80
+      - 443:443
+    environment:
+      - LOCALTUNNEL_PORT=${LOCALTUNNEL_PORT}
+      - LOCALTUNNEL_DOMAIN=${LOCALTUNNEL_DOMAIN}
+    networks:
+      - localtunnel
+
+  server:
+    container_name: localtunnel_server
+    restart: unless-stopped
+    build:
+      context: ./server
+    environment:
+      - LOCALTUNNEL_PORT=${LOCALTUNNEL_PORT}
+      - LOCALTUNNEL_DOMAIN=${LOCALTUNNEL_DOMAIN}
+    command: ["node", "-r", "esm", "./bin/server", "--port=$LOCALTUNNEL_PORT", "--domain=$LOCALTUNNEL_DOMAIN"]
+    networks:
+      - localtunnel
+
+networks:
+  localtunnel:
